@@ -28,9 +28,6 @@ class YoloTinyNet(Net):
       self.coord_scale = float(net_params['coord_scale'])
 
   def inference(self, images):
-
-
-
     """Build the yolo model
 
     Args:
@@ -101,10 +98,10 @@ class YoloTinyNet(Net):
     print 'delete Fully'
     local2 = self.local('local2', temp_conv,self.cell_size * self.cell_size * 1024, 4096)
 
-    '''
-    local1 = self.local('local1', temp_conv, self.cell_size * self.cell_size * 1024, 256)
+    '''   
+    local1 = self.local('local1', temp_conv, self.cell_size * self.cell_size * 1024, 2048)
 
-    local2 = self.local('local2', local1, 256, 4096)
+    local2 = self.local('local2', local1, 2048, 4096)
 
 
     local3 = self.local('local3', local2, 4096, self.cell_size * self.cell_size * (self.num_classes + self.boxes_per_cell * 5), leaky=False, pretrain=False, train=True)

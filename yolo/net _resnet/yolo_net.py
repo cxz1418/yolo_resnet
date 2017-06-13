@@ -1,18 +1,21 @@
-import ResModel
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import tensorflow as tf
 import numpy as np
 import re
 
 from yolo.net.net import Net 
 
-class YoloTinyNet(Net):
+class YoloNet(Net):
 
   def __init__(self, common_params, net_params, test=False):
     """
     common params: a params dict
     net_params   : a params dict
     """
-    super(YoloTinyNet, self).__init__(common_params, net_params)
+    super(YoloNet, self).__init__(common_params, net_params)
     #process params
     self.image_size = int(common_params['image_size'])
     self.num_classes = int(common_params['num_classes'])
@@ -28,9 +31,6 @@ class YoloTinyNet(Net):
       self.coord_scale = float(net_params['coord_scale'])
 
   def inference(self, images):
-
-
-
     """Build the yolo model
 
     Args:
@@ -38,88 +38,80 @@ class YoloTinyNet(Net):
     Returns:
       predicts: 4-D tensor [batch_size, cell_size, cell_size, num_classes + 5 * boxes_per_cell]
     """
-#ChangeStart
-    '''
     conv_num = 1
+    temp_conv = self.conv2d('conv' + str(conv_num), images, [7, 7, 3, 64], stride=2)
+    conv_num += 1
 
-    temp_conv = self.conv2d('conv' + str(conv_num), images, [3, 3, 3, 16], stride=1)
+
+    temp_pool = self.max_pool(temp_conv, [2, 2], 2)
+
+    temp_conv = self.conv2d('conv' + str(conv_num), temp_pool, [3, 3, 64, 192], stride=1)
     conv_num += 1
 
     temp_pool = self.max_pool(temp_conv, [2, 2], 2)
 
-    temp_conv = self.conv2d('conv' + str(conv_num), temp_pool, [3, 3, 16, 32], stride=1)
-    conv_num += 1
-
-    temp_pool = self.max_pool(temp_conv, [2, 2], 2)
-
-    temp_conv = self.conv2d('conv' + str(conv_num), temp_pool, [3, 3, 32, 64], stride=1)
+    temp_conv = self.conv2d('conv' + str(conv_num), temp_pool, [1, 1, 192, 128], stride=1)
     conv_num += 1
     
-    temp_conv = self.max_pool(temp_conv, [2, 2], 2)
-
-    temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 64, 128], stride=1)
-    conv_num += 1
-
-    temp_conv = self.max_pool(temp_conv, [2, 2], 2)
-
     temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 128, 256], stride=1)
     conv_num += 1
 
-    temp_conv = self.max_pool(temp_conv, [2, 2], 2)
+    temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [1, 1, 256, 256], stride=1)
+    conv_num += 1
 
     temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 256, 512], stride=1)
     conv_num += 1
 
     temp_conv = self.max_pool(temp_conv, [2, 2], 2)
 
+    for i in range(4):
+      temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [1, 1, 512, 256], stride=1)
+      conv_num += 1
+
+      temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 256, 512], stride=1)
+      conv_num += 1
+
+    temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [1, 1, 512, 512], stride=1)
+    conv_num += 1
+
     temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 512, 1024], stride=1)
-    conv_num += 1     
+    conv_num += 1
+
+    temp_conv = self.max_pool(temp_conv, [2, 2], 2)
+
+    for i in range(2):
+      temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [1, 1, 1024, 512], stride=1)
+      conv_num += 1
+
+      temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 512, 1024], stride=1)
+      conv_num += 1
 
     temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 1024, 1024], stride=1)
-    conv_num += 1 
+    conv_num += 1
 
+    temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 1024, 1024], stride=2)
+    conv_num += 1
+
+    #
     temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 1024, 1024], stride=1)
-    conv_num += 1 
-
-'''
-
-    temp_conv = ResModel.resnet(images,20)
-
-
-
-#ChangeENd
-
-
-    temp_conv = tf.transpose(temp_conv, (0, 3, 1, 2))
-
-
-
+    conv_num += 1
+    
+    temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 1024, 1024], stride=1)
+    conv_num += 1
 
 
     #Fully connected layer
-    '''
-    print 'delete Fully'
-    local2 = self.local('local2', temp_conv,self.cell_size * self.cell_size * 1024, 4096)
-
-    '''
-    local1 = self.local('local1', temp_conv, self.cell_size * self.cell_size * 1024, 256)
-
-    local2 = self.local('local2', local1, 256, 4096)
+    local1 = self.local('local1', temp_conv, 49 * 1024, 4096)
 
 
-    local3 = self.local('local3', local2, 4096, self.cell_size * self.cell_size * (self.num_classes + self.boxes_per_cell * 5), leaky=False, pretrain=False, train=True)
+    local1 = tf.nn.dropout(local1, keep_prob=0.5)
 
-    n1 = self.cell_size * self.cell_size * self.num_classes
+    local2 = self.local('local2', local1, 4096, self.cell_size * self.cell_size * ( self.num_classes + 5 * self.boxes_per_cell), leaky=False)
 
-    n2 = n1 + self.cell_size * self.cell_size * self.boxes_per_cell
+    local2 = tf.reshape(local2, [tf.shape(local2)[0], self.cell_size, self.cell_size, self.num_classes + 5 * self.boxes_per_cell])
 
-    class_probs = tf.reshape(local3[:, 0:n1], (-1, self.cell_size, self.cell_size, self.num_classes))
-    scales = tf.reshape(local3[:, n1:n2], (-1, self.cell_size, self.cell_size, self.boxes_per_cell))
-    boxes = tf.reshape(local3[:, n2:], (-1, self.cell_size, self.cell_size, self.boxes_per_cell * 4))
+    predicts = local2
 
-    local3 = tf.concat(3,[class_probs, scales, boxes])
-
-    predicts = local3
 
     return predicts
 
@@ -186,10 +178,10 @@ class YoloTinyNet(Net):
     max_x = tf.ceil(max_x)
     max_y = tf.ceil(max_y)
 
-    temp = tf.cast(tf.pack([max_y - min_y, max_x - min_x]), dtype=tf.int32)
+    temp = tf.cast(tf.stack([max_y - min_y, max_x - min_x]), dtype=tf.int32)
     objects = tf.ones(temp, tf.float32)
 
-    temp = tf.cast(tf.pack([min_y, self.cell_size - max_y, min_x, self.cell_size - max_x]), tf.int32)
+    temp = tf.cast(tf.stack([min_y, self.cell_size - max_y, min_x, self.cell_size - max_x]), tf.int32)
     temp = tf.reshape(temp, (2, 2))
     objects = tf.pad(objects, temp, "CONSTANT")
 
@@ -203,7 +195,7 @@ class YoloTinyNet(Net):
 
     response = tf.ones([1, 1], tf.float32)
 
-    temp = tf.cast(tf.pack([center_y, self.cell_size - center_y - 1, center_x, self.cell_size -center_x - 1]), tf.int32)
+    temp = tf.cast(tf.stack([center_y, self.cell_size - center_y - 1, center_x, self.cell_size -center_x - 1]), tf.int32)
     temp = tf.reshape(temp, (2, 2))
     response = tf.pad(response, temp, "CONSTANT")
     #objects = response
@@ -293,7 +285,6 @@ class YoloTinyNet(Net):
     return num + 1, object_num, [loss[0] + class_loss, loss[1] + object_loss, loss[2] + noobject_loss, loss[3] + coord_loss], predict, labels, nilboy
 
 
-
   def loss(self, predicts, labels, objects_num):
     """Add Loss to all the trainable variables
 
@@ -320,10 +311,10 @@ class YoloTinyNet(Net):
 
     tf.add_to_collection('losses', (loss[0] + loss[1] + loss[2] + loss[3])/self.batch_size)
 
-    tf.summary.scalar('class_loss', loss[0]/self.batch_size)
-    tf.summary.scalar('object_loss', loss[1]/self.batch_size)
-    tf.summary.scalar('noobject_loss', loss[2]/self.batch_size)
-    tf.summary.scalar('coord_loss', loss[3]/self.batch_size)
-    tf.summary.scalar('weight_loss', tf.add_n(tf.get_collection('losses')) - (loss[0] + loss[1] + loss[2] + loss[3])/self.batch_size )
+    tf.scalar_summary('class_loss', loss[0]/self.batch_size)
+    tf.scalar_summary('object_loss', loss[1]/self.batch_size)
+    tf.scalar_summary('noobject_loss', loss[2]/self.batch_size)
+    tf.scalar_summary('coord_loss', loss[3]/self.batch_size)
+    tf.scalar_summary('weight_loss', tf.add_n(tf.get_collection('losses')) - (loss[0] + loss[1] + loss[2] + loss[3])/self.batch_size )
 
     return tf.add_n(tf.get_collection('losses'), name='total_loss'), nilboy

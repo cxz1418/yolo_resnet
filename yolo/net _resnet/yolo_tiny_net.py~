@@ -1,4 +1,8 @@
-import ResModel
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+from resnet import softmax_layer, conv_layer, residual_block
 import tensorflow as tf
 import numpy as np
 import re
@@ -28,9 +32,6 @@ class YoloTinyNet(Net):
       self.coord_scale = float(net_params['coord_scale'])
 
   def inference(self, images):
-
-
-
     """Build the yolo model
 
     Args:
@@ -39,7 +40,7 @@ class YoloTinyNet(Net):
       predicts: 4-D tensor [batch_size, cell_size, cell_size, num_classes + 5 * boxes_per_cell]
     """
 #ChangeStart
-    '''
+
     conv_num = 1
 
     temp_conv = self.conv2d('conv' + str(conv_num), images, [3, 3, 3, 16], stride=1)
@@ -81,9 +82,8 @@ class YoloTinyNet(Net):
     temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 1024, 1024], stride=1)
     conv_num += 1 
 
-'''
 
-    temp_conv = ResModel.resnet(images,20)
+
 
 
 
@@ -97,16 +97,10 @@ class YoloTinyNet(Net):
 
 
     #Fully connected layer
-    '''
-    print 'delete Fully'
-    local2 = self.local('local2', temp_conv,self.cell_size * self.cell_size * 1024, 4096)
-
-    '''
     local1 = self.local('local1', temp_conv, self.cell_size * self.cell_size * 1024, 256)
 
     local2 = self.local('local2', local1, 256, 4096)
-
-
+ 
     local3 = self.local('local3', local2, 4096, self.cell_size * self.cell_size * (self.num_classes + self.boxes_per_cell * 5), leaky=False, pretrain=False, train=True)
 
     n1 = self.cell_size * self.cell_size * self.num_classes
