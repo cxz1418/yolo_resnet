@@ -92,15 +92,6 @@ class TextDataSet(DataSet):
 
     image = cv2.resize(image, (self.height, self.width))
 
-    #
-    # for j in range(self.height):
-    #   for k in range(self.width):
-    #     image[j][k][0] = (image[j][k][0] - 125.3) / 63.0
-    #     image[j][k][1] = (image[j][k][1] - 123.0) / 62.1
-    #     image[j][k][2] = (image[j][k][2] - 113.9) / 66.7
-
-
-
     labels = [[0, 0, 0, 0, 0]] * self.max_objects
     i = 1
     object_num = 0

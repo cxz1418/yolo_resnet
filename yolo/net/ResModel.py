@@ -18,7 +18,7 @@ def resnet(inpt, n):
         layers.append(conv1)
         print("conv1 shape:")
         print(conv1.get_shape())
-
+##########################################################################
     for i in range (num_conv):
         with tf.variable_scope('conv2_%d' % (i+1)):
             conv2_x = residual_block(layers[-1], 16, False)
@@ -29,7 +29,7 @@ def resnet(inpt, n):
 	    print("conv2 shape:")
         print(conv2.get_shape())
         assert conv2.get_shape().as_list()[1:] == [448, 448, 16]
-
+##############################################################################
     for i in range (num_conv):
         down_sample = True if i == 0 else False
         with tf.variable_scope('conv3_%d' % (i+1)):
@@ -39,7 +39,7 @@ def resnet(inpt, n):
             layers.append(conv3)
 
         assert conv3.get_shape().as_list()[1:] == [224, 224, 32]
-    
+    #################################################
     for i in range (num_conv):
         down_sample = True if i == 0 else False
         with tf.variable_scope('conv4_%d' % (i+1)):

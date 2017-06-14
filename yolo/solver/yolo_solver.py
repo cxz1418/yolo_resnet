@@ -27,6 +27,8 @@ class YoloSolver(Solver):
     self.max_iterators = int(solver_params['max_iterators'])
     #
     self.dataset = dataset
+
+
     self.net = net
     #construct graph
     self.construct_graph()
@@ -90,12 +92,6 @@ class YoloSolver(Solver):
 
 
 
-      for i in range(self.batch_size):
-        for j in range(448):
-          for k in range(448):
-            np_images[i][j][k][0] = (np_images[i][j][k][0] - 125.3) / 63.0
-            np_images[i][j][k][1] = (np_images[i][j][k][1] - 123.0) / 62.1
-            np_images[i][j][k][2] = (np_images[i][j][k][2] - 113.9) / 66.7
 
 
       _, loss_value, nilboy = sess.run([self.train_op, self.total_loss, self.nilboy], feed_dict={self.images: np_images, self.labels: np_labels, self.objects_num: np_objects_num})

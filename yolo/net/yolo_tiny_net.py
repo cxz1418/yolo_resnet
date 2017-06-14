@@ -1,4 +1,4 @@
-import ResModel
+import ResModel_pyramid
 import tensorflow as tf
 import numpy as np
 import re
@@ -39,7 +39,7 @@ class YoloTinyNet(Net):
       predicts: 4-D tensor [batch_size, cell_size, cell_size, num_classes + 5 * boxes_per_cell]
     """
 #ChangeStart
-    '''
+    
     conv_num = 1
 
     temp_conv = self.conv2d('conv' + str(conv_num), images, [3, 3, 3, 16], stride=1)
@@ -81,9 +81,9 @@ class YoloTinyNet(Net):
     temp_conv = self.conv2d('conv' + str(conv_num), temp_conv, [3, 3, 1024, 1024], stride=1)
     conv_num += 1 
 
-'''
 
-    temp_conv = ResModel.resnet(images,20)
+
+  #  temp_conv = ResModel_pyramid.resnet(images,20)
 
 
 
